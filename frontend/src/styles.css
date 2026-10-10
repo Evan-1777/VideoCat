@@ -1,0 +1,350 @@
+:root {
+  --bg-a: #f5f5f5;
+  --bg-b: #ebebeb;
+  --card: #ffffff;
+  --fg: #242424;
+  --fg2: #616161;
+  --border: #e0e0e0;
+  --brand: #0078d4;
+  --brand-soft: #eff6fc;
+  --layer2: rgba(255, 255, 255, 0.72);
+  --layer2-border: rgba(255, 255, 255, 0.55);
+  --overlay: rgba(0, 0, 0, 0.2);
+  --shadow1: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 2px rgba(0, 0, 0, 0.04);
+  --shadow3: 0 12px 32px rgba(0, 0, 0, 0.16);
+  --ok: #0f7b0f;
+  --err: #c42b1c;
+  --r4: 4px;
+  --r6: 6px;
+  --r8: 8px;
+}
+
+html[data-theme='dark'] {
+  --bg-a: #202020;
+  --bg-b: #1a1a1a;
+  --card: #292929;
+  --fg: #ffffff;
+  --fg2: #c8c8c8;
+  --border: #444444;
+  --brand: #479ef5;
+  --brand-soft: #0f2b45;
+  --layer2: rgba(41, 41, 41, 0.72);
+  --layer2-border: rgba(255, 255, 255, 0.1);
+  --overlay: rgba(0, 0, 0, 0.45);
+  --shadow1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow3: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --ok: #6ccb5f;
+  --err: #ff99a4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 100%);
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.42;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 40px 1fr;
+}
+
+/* Layer 2：标题栏（Acrylic） */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--layer2);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-bottom: 1px solid var(--layer2-border);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+.brandmark {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r4);
+  background: var(--brand);
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.brandname {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.titlebar .spacer,
+.spacer {
+  flex: 1;
+}
+
+.body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 224px 1fr;
+}
+
+/* Layer 2：侧栏（Acrylic） */
+.nav {
+  padding: 10px 8px;
+  background: var(--layer2);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-right: 1px solid var(--layer2-border);
+  box-shadow: inset -1px 0 0 var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--r6);
+  color: var(--fg);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+.nav-item:hover {
+  background: rgba(128, 128, 128, 0.12);
+}
+.nav-item.active {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.main {
+  overflow-y: auto;
+  padding: 28px 32px 80px;
+}
+.main-inner {
+  max-width: 780px;
+  margin: 0 auto;
+}
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  letter-spacing: -0.01em;
+}
+
+/* Layer 1：内容卡片 */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r8);
+  box-shadow: var(--shadow1);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.card-head h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.drop {
+  border: 1px dashed var(--border);
+  border-radius: var(--r8);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg2);
+  text-align: center;
+}
+.drop.over {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.file-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r6);
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.file-name {
+  font-weight: 600;
+  word-break: break-all;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.tag {
+  font-size: 12px;
+  color: var(--fg2);
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+.hint {
+  font-size: 12px;
+  color: var(--fg2);
+  margin-top: 6px;
+}
+.hint b {
+  color: var(--fg);
+  font-weight: 600;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* 进度 */
+.phase {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg2);
+  margin-bottom: 8px;
+}
+.phase.done {
+  color: var(--ok);
+}
+.phase.active {
+  color: var(--fg);
+  font-weight: 600;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex: 0 0 auto;
+}
+.phase.done .dot {
+  background: var(--ok);
+}
+.phase.active .dot {
+  background: var(--brand);
+}
+
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.kv:last-child {
+  border-bottom: 0;
+}
+.kv span:first-child {
+  color: var(--fg2);
+  flex: 0 0 auto;
+}
+.kv span:last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* Layer 3：抽屉 + 遮罩 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  z-index: 30;
+}
+.overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 380px;
+  max-width: 92vw;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow3);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  z-index: 31;
+  display: flex;
+  flex-direction: column;
+}
+.drawer.open {
+  transform: translateX(0);
+}
+.drawer-head {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.drawer-head h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.drawer-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.drawer-foot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}

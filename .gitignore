@@ -1,0 +1,6 @@
+build/bin
+node_modules
+frontend/dist
+
+# 本地工具设置
+.codebuddy/settings.local.json
