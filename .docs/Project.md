@@ -62,12 +62,13 @@ videocat/
 - 2026-10-10 缩放高度取偶数：`scale=-2:'trunc(min(ih,H)/2)*2'`——源高为奇数时可兼容 yuv420p 与硬件编码器
 - 2026-10-10 数字陷阱：ffmpeg `out_time_ms` 实测与 `out_time_us` 同值（均为微秒），进度一律按微秒换算
 - 2026-10-10 应用数据目录取 `os.UserCacheDir()`（Windows 为 `%LOCALAPPDATA%\video cat`），ffmpeg 缓存与 `settings.json` 同处其下
-- 2026-10-10 Windows 产物由 GitHub Actions（`windows-latest`）构建，CI 不打包 ffmpeg；★ 仓库尚无 remote，工作流已就绪但**未经实际运行验证**，推送远端后须跑一次闭环
+- 2026-10-10 Windows 产物由 GitHub Actions（`windows-latest`）构建，CI 不打包 ffmpeg
+- 2026-10-10 公共仓库 `Evan-1777/VideoCat`（https://github.com/Evan-1777/VideoCat），remote origin 为 https 协议；工作流对 push master / tag `v*` / 手动触发均自动运行单测与构建，push 触发的首次运行已验证通过（run 38062962931）
 
 ## 外部集成
 
 - **BtbN/FFmpeg-Builds**：运行时下载 ffmpeg/ffprobe（Windows），按固定 tag 取资产并用同 release 的 `checksums.sha256` 校验完整性。
-- **GitHub Actions**：`.github/workflows/build-windows.yml` 在 tag `v*` 或手动触发时构建并上传 exe 产物。工作流已就绪但尚未实际运行（仓库无 remote，见「约束与决策」）。
+- **GitHub Actions**：`.github/workflows/build-windows.yml` 对 push master / tag `v*` / 手动触发均构建并上传 exe 产物；首次运行已验证通过。
 
 ## 术语
 
