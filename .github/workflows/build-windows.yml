@@ -28,6 +28,9 @@ jobs:
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
 
+      - name: Build frontend
+        run: cd frontend && npm ci && npm run build
+
       - name: Unit tests (ffmpeg-dependent tests skip if absent)
         run: go test ./...
 

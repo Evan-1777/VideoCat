@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -94,19 +95,19 @@ func TestOutputPaths(t *testing.T) {
 	p := config.DefaultParams("/videos/demo.mp4")
 	p.AudioFormat = config.AudioAAC
 	o := OutputPaths(p, sampleMeta())
-	if o.Video != "/videos/demo.cat.mp4" {
+	if o.Video != filepath.Join("/videos", "demo.cat.mp4") {
 		t.Errorf("video = %s", o.Video)
 	}
-	if o.Audio != "/videos/demo.cat.m4a" {
+	if o.Audio != filepath.Join("/videos", "demo.cat.m4a") {
 		t.Errorf("audio = %s", o.Audio)
 	}
-	if o.Meta != "/videos/demo.cat.meta.json" {
+	if o.Meta != filepath.Join("/videos", "demo.cat.meta.json") {
 		t.Errorf("meta = %s", o.Meta)
 	}
 
 	p.OutputDir = "/custom"
 	o = OutputPaths(p, sampleMeta())
-	if o.Video != "/custom/demo.cat.mp4" {
+	if o.Video != filepath.Join("/custom", "demo.cat.mp4") {
 		t.Errorf("custom video = %s", o.Video)
 	}
 }

@@ -51,7 +51,9 @@ func TestValidateUnknownFPSAllowsAnyPositiveM(t *testing.T) {
 }
 
 func TestSettingsRoundTrip(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+	t.Setenv("LOCALAPPDATA", cache) // Windows：os.UserCacheDir 读 %LocalAppData%
 	want := Settings{DefaultOutputDir: filepath.Join(t.TempDir(), "out"), FFmpegPath: "/usr/bin/ffmpeg"}
 	if err := want.Save(); err != nil {
 		t.Fatalf("save: %v", err)
@@ -66,7 +68,9 @@ func TestSettingsRoundTrip(t *testing.T) {
 }
 
 func TestLoadSettingsMissingFile(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	cache := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cache)
+	t.Setenv("LOCALAPPDATA", cache) // Windows：os.UserCacheDir 读 %LocalAppData%
 	got, err := LoadSettings()
 	if err != nil {
 		t.Fatalf("missing file should not error, got %v", err)
