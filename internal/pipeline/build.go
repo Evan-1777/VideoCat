@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"videocat/internal/config"
+	"videocat/internal/ffmpeg"
 	"videocat/internal/probe"
 )
 
@@ -81,26 +82,10 @@ func VideoFilter(p config.Params, meta probe.VideoMeta) string {
 		fmt.Sprintf("setpts=N/(%g*TB)", a),
 	}
 	if h := targetHeight(p.Resolution); h > 0 {
-		parts = append(parts, fmt.Sprintf("scale=-2:'min(ih,%d)'", h))
+		// 高度取偶数，兼容 yuv420p（源高为奇数时不置于报错）。
+		parts = append(parts, fmt.Sprintf("scale=-2:'trunc(min(ih,%d)/2)*2'", h))
 	}
 	return strings.Join(parts, ",")
-}
-
-// qualityArgs 依据编码器映射质量参数（CRF 语义近似）。
-func qualityArgs(encoder string, crf int) []string {
-	q := strconv.Itoa(crf)
-	switch encoder {
-	case "libx264":
-		return []string{"-crf", q}
-	case "h264_nvenc", "hevc_nvenc":
-		return []string{"-rc", "vbr", "-cq", q}
-	case "h264_qsv", "hevc_qsv":
-		return []string{"-global_quality", q}
-	case "h264_amf", "hevc_amf":
-		return []string{"-qp_i", q, "-qp_p", q}
-	default:
-		return nil
-	}
 }
 
 // BuildVideoArgs 构建压缩视频重渲染的 ffmpeg 参数（不含可执行文件）。
@@ -122,7 +107,7 @@ func BuildVideoArgs(p config.Params, meta probe.VideoMeta, encoder string, hwDec
 	args = append(args, "-vf", VideoFilter(p, meta))
 	args = append(args, "-an")
 	args = append(args, "-c:v", encoder)
-	args = append(args, qualityArgs(encoder, p.CRF)...)
+	args = append(args, ffmpeg.QualityArgs(encoder, p.CRF)...)
 	args = append(args, "-r", formatFloat(outFPS))
 	args = append(args, output)
 	return args

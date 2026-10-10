@@ -254,7 +254,7 @@
 
 ### TASK-015：Windows 构建配置与 CI 工作流
 
-- **Status**：DONE
+- **Status**：DONE（部分）——CI 配置就绪，验收标准「CI 成功产出可运行的 exe」未达成：仓库无 remote，工作流从未运行；须推送远端后跑一次闭环
 - **Executor**：主线
 - **Description**：配置 Wails 打包与云端 CI，产出 Windows exe。
 - **Details**：

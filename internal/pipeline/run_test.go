@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -74,9 +75,16 @@ func TestRunEndToEnd(t *testing.T) {
 		t.Errorf("audio duration = %.3f, want ~%.3f (±2%%)", audioDur, meta.Duration)
 	}
 
-	// 元数据记录压缩比应约等于 a/m。
-	if wantRatio := meta.FPS / float64(p.FramesPerSecond); res.Meta.CompressionRatio < wantRatio-0.5 || res.Meta.CompressionRatio > wantRatio+0.5 {
-		t.Errorf("compression ratio = %.3f, want ~%.3f", res.Meta.CompressionRatio, wantRatio)
+	// 元数据的输出时长/压缩比须与 ffprobe 实测一致（而非理论预测值）。
+	if !res.Meta.OutputDurationMeasured {
+		t.Error("meta.outputDurationMeasured = false，期望用实测值回填")
+	}
+	if diff := res.Meta.OutputDuration - outMeta.Duration; math.Abs(diff) > outMeta.Duration*0.01 {
+		t.Errorf("meta outputDuration %.3f 与实测 %.3f 不一致（>1%%）", res.Meta.OutputDuration, outMeta.Duration)
+	}
+	wantRatio := meta.Duration / outMeta.Duration
+	if math.Abs(res.Meta.CompressionRatio-wantRatio) > wantRatio*0.01 {
+		t.Errorf("meta compressionRatio %.3f 与实测推算 %.3f 不一致（>1%%）", res.Meta.CompressionRatio, wantRatio)
 	}
 }
 
@@ -126,7 +134,7 @@ func TestRunDoesNotUpscaleSmallSource(t *testing.T) {
 	}
 }
 
-// TestRenderDeterminism 记录同输入两次运行所选帧是否一致，用于确认 Plan §4 结论。
+// TestRenderDeterminism 断言 ffmpeg random() 对同一输入的确定性（.docs/Project.md 记录的不变式）。
 func TestRenderDeterminism(t *testing.T) {
 	runner, ctx := newRunner(t)
 	dir := t.TempDir()
@@ -152,10 +160,9 @@ func TestRenderDeterminism(t *testing.T) {
 		}
 		sums[i] = string(data)
 	}
-	if sums[0] == sums[1] {
-		t.Logf("随机抽帧确定性：两次运行所选帧完全一致")
-	} else {
-		t.Logf("随机抽帧确定性：两次运行所选帧不一致（random() 依赖运行期状态）")
+	// ffmpeg random() 对同一输入确定性；若该不变式被打破，须同步更新 .docs/Project.md。
+	if sums[0] != sums[1] {
+		t.Error("随机抽帧不再确定：两次运行所选帧不一致；若为 ffmpeg 行为变化，请更新 .docs/Project.md")
 	}
 }
 

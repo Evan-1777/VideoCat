@@ -99,9 +99,40 @@ export const api = {
   saveSettings: (s: Settings) => bridge().SaveSettings(s),
 }
 
-// 订阅后端事件，返回取消订阅函数。
+// 事件总线路由：每个事件名只向 Wails 注册一个监听，内部按订阅者分发。
+// 规避 Wails EventsOff(name) 会移除该事件名全部监听、导致多订阅者互相误杀的问题。
+type EventCallback = (...data: unknown[]) => void
+const listeners = new Map<string, Set<EventCallback>>()
+
+function subscribe(name: string, cb: EventCallback): () => void {
+  let set = listeners.get(name)
+  if (!set) {
+    set = new Set()
+    listeners.set(name, set)
+  }
+  if (set.size === 0) {
+    window.runtime.EventsOn(name, (...data: unknown[]) => {
+      listeners.get(name)?.forEach((fn) => fn(...data))
+    })
+  }
+  set.add(cb)
+  return () => {
+    const s = listeners.get(name)
+    if (!s) return
+    s.delete(cb)
+    if (s.size === 0) {
+      listeners.delete(name)
+      window.runtime.EventsOff(name)
+    }
+  }
+}
+
+// 订阅后端事件并只取首个参数，返回取消订阅函数。
 export function onEvent<T>(name: string, cb: (payload: T) => void): () => void {
-  const handler = (...data: unknown[]) => cb(data[0] as T)
-  window.runtime.EventsOn(name, handler)
-  return () => window.runtime.EventsOff(name)
+  return subscribe(name, (...data: unknown[]) => cb(data[0] as T))
+}
+
+// 订阅后端事件并透传全部参数（如 wails:file-drop 的 (x, y, paths)）。
+export function onRawEvent(name: string, cb: EventCallback): () => void {
+  return subscribe(name, cb)
 }

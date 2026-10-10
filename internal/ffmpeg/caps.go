@@ -23,6 +23,9 @@ const cpuEncoder = "libx264"
 // 代表性全链路滤镜链：随机抽帧 + 重打包 + 缩放。
 const selfCheckFilter = "select='lt(random(0),0.5)',setpts=N/(30*TB),scale=-2:'min(ih,720)'"
 
+// 自检使用的代表性质量值，使探测覆盖真实质量参数组合。
+const selfCheckCRF = 23
+
 // Capabilities 记录探测到的编解码能力。
 type Capabilities struct {
 	HWAccels       []string `json:"hwaccels"`
@@ -148,8 +151,9 @@ func selfCheck(ctx context.Context, exe, input, encoder string, hwaccel bool) er
 		"-vf", selfCheckFilter,
 		"-frames:v", "1",
 		"-c:v", encoder,
-		"-f", "null", "-",
 	)
+	args = append(args, QualityArgs(encoder, selfCheckCRF)...)
+	args = append(args, "-f", "null", "-")
 	out, err := exec.CommandContext(ctx, exe, args...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s 自检失败：%v %s", encoder, err, strings.TrimSpace(string(out)))

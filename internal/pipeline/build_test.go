@@ -28,7 +28,7 @@ func TestBuildVideoArgs(t *testing.T) {
 	joined := strings.Join(args, " ")
 
 	for _, want := range []string{
-		"select='lt(random(0),", "setpts=N/(", "scale=-2:'min(ih,720)'",
+		"select='lt(random(0),", "setpts=N/(", "scale=-2:'trunc(min(ih,720)/2)*2'",
 		"-an", "-c:v h264_nvenc", "-hwaccel auto", "-progress pipe:1", "-nostats",
 		"/out/demo.cat.mp4",
 	} {

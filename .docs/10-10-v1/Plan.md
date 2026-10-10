@@ -5,7 +5,7 @@
 **版本**：v1.0
 **设计哲学**：Microsoft Fluent Design System（Fluent UI React v9 + Fluent 令牌）
 
-> **完成结论**：Phase 1–4 代码全部落地。Linux 侧 `go build ./...`、`go vet ./...`、`go test ./...`（config / ffmpeg / probe / pipeline 全通过，含样例端到端、时长/分辨率、音频跳过、不放大、取消、随机确定性）与 `frontend` 的 `tsc && vite build` 均通过。WSL 缺 libgtk/libwebkit，`wails dev` 无法开窗，按 §4 风险缓解改走「Go 单测 + 前端构建」双轨验证；Windows exe 由 GitHub Actions 构建，平台项见 `.docs/Project.md` 手动验收清单（待 Windows 逐项验收）。
+> **完成结论**：Phase 1–4 代码全部落地。Linux 侧 `go build ./...`、`go vet ./...`、`go test ./...`（config / ffmpeg / probe / pipeline 全通过，含样例端到端、时长/分辨率、音频跳过、不放大、取消、随机确定性）与 `frontend` 的 `tsc && vite build` 均通过。WSL 缺 libgtk/libwebkit，`wails dev` 无法开窗，按 §4 风险缓解改走「Go 单测 + 前端构建」双轨验证；Windows exe 的 CI 工作流已就绪但**未经实际运行**（仓库无 remote），平台项见 `.docs/Project.md` 手动验收清单（待 Windows 逐项验收）。
 
 > 定位与边界见 `.docs/SCOPE.md`，工作流规则见 `AGENTS.md`。本计划由规划段产出，交付段由接手会话依据本文件与 `Tasks.md` 执行。
 

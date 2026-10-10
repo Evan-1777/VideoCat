@@ -71,6 +71,14 @@ func (r *Runner) Run(ctx context.Context, p config.Params, meta probe.VideoMeta,
 	}
 	phaseSeconds[PhaseRender] = time.Since(start).Seconds()
 
+	// 以 ffprobe 实测输出视频时长回填元数据与结果（TASK-010 要求与实测一致；随机抽帧的理论值不等于实测值）。
+	outputDuration := expectedOut
+	durationMeasured := false
+	if vp, perr := probe.Probe(ctx, r.Tools.FFprobe, outputs.Video); perr == nil && vp.Duration > 0 {
+		outputDuration = vp.Duration
+		durationMeasured = true
+	}
+
 	// 阶段 2：音频提取（源无音轨或未开启时跳过）
 	audioSkipped := true
 	if p.ExtractAudio && meta.HasAudio {
@@ -92,20 +100,21 @@ func (r *Runner) Run(ctx context.Context, p config.Params, meta probe.VideoMeta,
 	}
 
 	ratio := 0.0
-	if expectedOut > 0 {
-		ratio = meta.Duration / expectedOut
+	if outputDuration > 0 {
+		ratio = meta.Duration / outputDuration
 	}
 	rec := MetaRecord{
-		Source:           meta,
-		Params:           p,
-		Encoder:          encoder,
-		HardwareDecode:   hwDecode,
-		Outputs:          outputs,
-		SourceDuration:   meta.Duration,
-		OutputDuration:   expectedOut,
-		CompressionRatio: ratio,
-		PhaseSeconds:     phaseSeconds,
-		AudioSkipped:     audioSkipped,
+		Source:                 meta,
+		Params:                 p,
+		Encoder:                encoder,
+		HardwareDecode:         hwDecode,
+		Outputs:                outputs,
+		SourceDuration:         meta.Duration,
+		OutputDuration:         outputDuration,
+		OutputDurationMeasured: durationMeasured,
+		CompressionRatio:       ratio,
+		PhaseSeconds:           phaseSeconds,
+		AudioSkipped:           audioSkipped,
 	}
 	if err := WriteMeta(outputs.Meta, rec); err != nil {
 		return Result{}, fmt.Errorf("写入元数据失败：%w", err)
@@ -115,7 +124,7 @@ func (r *Runner) Run(ctx context.Context, p config.Params, meta probe.VideoMeta,
 		Outputs:        outputs,
 		Encoder:        encoder,
 		HardwareDecode: hwDecode,
-		OutputDuration: expectedOut,
+		OutputDuration: outputDuration,
 		AudioSkipped:   audioSkipped,
 		Meta:           rec,
 	}, nil

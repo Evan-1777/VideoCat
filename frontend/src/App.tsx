@@ -54,7 +54,13 @@ export default function App() {
 
           <main className="main">
             <div className="main-inner">
-              {page === 'convert' ? <ConvertPage /> : <SettingsPage />}
+              {/* 两页常驻、仅切换显隐：避免卸载正在进行中的任务状态 */}
+              <div style={{ display: page === 'convert' ? 'block' : 'none' }}>
+                <ConvertPage />
+              </div>
+              <div style={{ display: page === 'settings' ? 'block' : 'none' }}>
+                <SettingsPage />
+              </div>
             </div>
           </main>
         </div>

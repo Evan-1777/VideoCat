@@ -21,7 +21,7 @@ import {
   VideoClip24Regular,
 } from '@fluentui/react-icons'
 
-import { api, Capabilities, JobResult, onEvent, Params, Settings, VideoMeta } from '../api'
+import { api, Capabilities, JobResult, onEvent, onRawEvent, Params, Settings, VideoMeta } from '../api'
 import { baseName, dirName, estimate, formatBytes, formatDuration, formatRatio } from '../lib/format'
 import AdvancedDrawer from '../components/AdvancedDrawer'
 
@@ -114,16 +114,12 @@ export default function ConvertPage() {
       onEvent<{ done: number; total: number }>('ffmpeg:download', (p) => {
         setDownload(p.total > 0 && p.done >= p.total ? null : p)
       }),
+      onRawEvent('wails:file-drop', (...args) => {
+        const paths = args[2] as string[] | undefined
+        if (paths && paths.length > 0) pickSource(paths[0])
+      }),
     ]
-    const onDrop = (...args: unknown[]) => {
-      const paths = args[2] as string[] | undefined
-      if (paths && paths.length > 0) pickSource(paths[0])
-    }
-    window.runtime.EventsOn('wails:file-drop', onDrop)
-    return () => {
-      offs.forEach((off) => typeof off === 'function' && off())
-      window.runtime.EventsOff('wails:file-drop')
-    }
+    return () => offs.forEach((off) => off())
   }, [pickSource, dispatchToast])
 
   const maxM = source ? Math.max(1, Math.floor(source.fps)) : 1

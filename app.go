@@ -24,6 +24,8 @@ type App struct {
 	mu      sync.Mutex
 	running bool
 	cancel  context.CancelFunc
+
+	toolsMu sync.Mutex
 	tools   *ffmpeg.Tools
 }
 
@@ -102,32 +104,24 @@ func (a *App) Capabilities() (ffmpeg.Capabilities, error) {
 
 // StartJob 校验参数并异步启动任务；单任务并发保护。
 func (a *App) StartJob(p config.Params) error {
+	// 先占位再 preflight，避免 preflight（含首次下载/探测）期间的并发窗口导致双跑。
 	a.mu.Lock()
 	if a.running {
 		a.mu.Unlock()
 		return errors.New("已有任务正在运行")
 	}
+	a.running = true
 	a.mu.Unlock()
 
-	tools, err := a.ensureTools(a.ctx)
+	ctx, cancel := context.WithCancel(a.ctx)
+	tools, caps, meta, err := a.preflight(ctx, p)
 	if err != nil {
-		return err
-	}
-	meta, err := probe.Probe(a.ctx, tools.FFprobe, p.Input)
-	if err != nil {
-		return err
-	}
-	if err := p.Validate(meta.FPS); err != nil {
-		return err
-	}
-	caps, err := a.detector.Get(a.ctx, tools)
-	if err != nil {
+		cancel()
+		a.finishJob()
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(a.ctx)
 	a.mu.Lock()
-	a.running = true
 	a.cancel = cancel
 	a.mu.Unlock()
 
@@ -135,13 +129,36 @@ func (a *App) StartJob(p config.Params) error {
 	return nil
 }
 
+// preflight 确保 ffmpeg、读取源元数据、校验参数并探测编码能力。
+func (a *App) preflight(ctx context.Context, p config.Params) (ffmpeg.Tools, *ffmpeg.Capabilities, probe.VideoMeta, error) {
+	tools, err := a.ensureTools(ctx)
+	if err != nil {
+		return ffmpeg.Tools{}, nil, probe.VideoMeta{}, err
+	}
+	meta, err := probe.Probe(ctx, tools.FFprobe, p.Input)
+	if err != nil {
+		return ffmpeg.Tools{}, nil, probe.VideoMeta{}, err
+	}
+	if err := p.Validate(meta.FPS); err != nil {
+		return ffmpeg.Tools{}, nil, probe.VideoMeta{}, err
+	}
+	caps, err := a.detector.Get(ctx, tools)
+	if err != nil {
+		return ffmpeg.Tools{}, nil, probe.VideoMeta{}, err
+	}
+	return tools, caps, meta, nil
+}
+
+// finishJob 复位单任务状态。
+func (a *App) finishJob() {
+	a.mu.Lock()
+	a.running = false
+	a.cancel = nil
+	a.mu.Unlock()
+}
+
 func (a *App) runJob(ctx context.Context, tools ffmpeg.Tools, caps *ffmpeg.Capabilities, p config.Params, meta probe.VideoMeta) {
-	defer func() {
-		a.mu.Lock()
-		a.running = false
-		a.cancel = nil
-		a.mu.Unlock()
-	}()
+	defer a.finishJob()
 
 	runner := &pipeline.Runner{Tools: tools, Caps: caps}
 	res, err := runner.Run(ctx, p, meta, pipeline.Sink{
@@ -187,7 +204,12 @@ func (a *App) OpenOutputDir(path string) error {
 	default:
 		cmd = exec.Command("xdg-open", path)
 	}
-	return cmd.Start()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	// 回收子进程，避免 Unix 上留下僵尸进程。
+	go func() { _ = cmd.Wait() }()
+	return nil
 }
 
 // GetSettings 读取应用设置。
@@ -200,19 +222,18 @@ func (a *App) SaveSettings(s config.Settings) error {
 	if err := s.Save(); err != nil {
 		return err
 	}
-	a.mu.Lock()
+	a.toolsMu.Lock()
 	a.tools = nil
-	a.mu.Unlock()
+	a.toolsMu.Unlock()
 	return nil
 }
 
-// ensureTools 定位 ffmpeg；缺失时（仅 Windows）触发下载并缓存。
+// ensureTools 定位 ffmpeg；缺失时（仅 Windows）触发下载并缓存。互斥保证并发首调只下载一次。
 func (a *App) ensureTools(ctx context.Context) (ffmpeg.Tools, error) {
-	a.mu.Lock()
-	cached := a.tools
-	a.mu.Unlock()
-	if cached != nil {
-		return *cached, nil
+	a.toolsMu.Lock()
+	defer a.toolsMu.Unlock()
+	if a.tools != nil {
+		return *a.tools, nil
 	}
 
 	s, err := config.LoadSettings()
@@ -225,8 +246,6 @@ func (a *App) ensureTools(ctx context.Context) (ffmpeg.Tools, error) {
 	if err != nil {
 		return ffmpeg.Tools{}, fmt.Errorf("ffmpeg 未就绪：%w", err)
 	}
-	a.mu.Lock()
 	a.tools = &tools
-	a.mu.Unlock()
 	return tools, nil
 }

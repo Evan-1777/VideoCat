@@ -57,14 +57,17 @@ videocat/
 - 2026-10-10 ffmpeg 来源钉死不可变 release：tag `autobuild-2026-10-10-13-04`、资产 `ffmpeg-n9.0.2-25-g67b60c310b-win64-gpl-9.0.zip`、SHA-256 `1b196e14bd13b76c0d33411f8ef4511f8708a459f682b58ca4c0285a793138cf`；升级即改 `internal/ffmpeg/download.go` 三个常量
 - 2026-10-10 硬解仅在能力探测的「硬解 + 软件滤镜链 + 编码」全链路自检通过时才注入 `-hwaccel auto`，且不设 `-hwaccel_output_format`——保证帧回传系统内存以兼容软件滤镜
 - 2026-10-10 编码器优先序：H.264（`h264_nvenc → h264_qsv → h264_amf`）→ HEVC 备选 → `libx264` 回退——兼容性优先，利于 AI 消费
+- 2026-10-10 质量参数映射（`ffmpeg.QualityArgs`）由能力探测自检与正式任务共用——使探测覆盖真实编码参数组合（含 AMF 的 `-qp_i/-qp_p`）
+- 2026-10-10 meta.json 与结果卡的输出时长 / 压缩比取渲染后 ffprobe **实测值**（`outputDurationMeasured` 标记），不用抽帧理论值——随机采样下二者不等
+- 2026-10-10 缩放高度取偶数：`scale=-2:'trunc(min(ih,H)/2)*2'`——源高为奇数时可兼容 yuv420p 与硬件编码器
 - 2026-10-10 数字陷阱：ffmpeg `out_time_ms` 实测与 `out_time_us` 同值（均为微秒），进度一律按微秒换算
 - 2026-10-10 应用数据目录取 `os.UserCacheDir()`（Windows 为 `%LOCALAPPDATA%\video cat`），ffmpeg 缓存与 `settings.json` 同处其下
-- 2026-10-10 Windows 产物由 GitHub Actions（`windows-latest`）构建，CI 不打包 ffmpeg
+- 2026-10-10 Windows 产物由 GitHub Actions（`windows-latest`）构建，CI 不打包 ffmpeg；★ 仓库尚无 remote，工作流已就绪但**未经实际运行验证**，推送远端后须跑一次闭环
 
 ## 外部集成
 
 - **BtbN/FFmpeg-Builds**：运行时下载 ffmpeg/ffprobe（Windows），按固定 tag 取资产并用同 release 的 `checksums.sha256` 校验完整性。
-- **GitHub Actions**：`.github/workflows/build-windows.yml` 在 tag `v*` 或手动触发时构建并上传 exe 产物。
+- **GitHub Actions**：`.github/workflows/build-windows.yml` 在 tag `v*` 或手动触发时构建并上传 exe 产物。工作流已就绪但尚未实际运行（仓库无 remote，见「约束与决策」）。
 
 ## 术语
 
